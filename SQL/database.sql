@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS users;
 */
 
 CREATE TABLE users (
-    user_id int PRIMARY KEY,
+    user_id serial PRIMARY KEY,
     login varchar(32) NOT NULL UNIQUE,
     name varchar(32) NOT NULL,
     surname varchar(32) NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE users (
 DROP TABLE IF EXISTS organizators; 
 
 CREATE TABLE organizators (
-    organizator_id int PRIMARY KEY,
+    organizator_id serial PRIMARY KEY,
     name varchar(64) NOT NULL,
     insert_date TIMESTAMP WITH TIME ZONE NOT NULL
 );
@@ -30,7 +30,7 @@ CREATE TABLE organizators (
 DROP TABLE IF EXISTS administrators; 
 
 CREATE TABLE administrators (
-    administrator_id int PRIMARY KEY,
+    administrator_id serial PRIMARY KEY,
     user_id int NOT NULL, --FK to users
     organizator_id int NOT NULL, --FK to organizators
     insert_date TIMESTAMP WITH TIME ZONE NOT NULL
@@ -39,19 +39,19 @@ CREATE TABLE administrators (
 DROP TABLE IF EXISTS places;
 
 CREATE TABLE places (
-    place_id int PRIMARY KEY,
+    place_id serial PRIMARY KEY,
     name varchar(128) NOT NULL,
-    organizator_id int NO NULL, -- FK to organizators
+    organizator_id int NOT NULL, -- FK to organizators
     creator_id int NOT NULL, -- FK to users
     insert_date TIMESTAMP WITH TIME ZONE,
     UNIQUE(name, organizator_id)
 );
 
 
-DROP TABLE IS EXISTS seats;
+DROP TABLE IF EXISTS seats;
 
 CREATE TABLE seats (
-    seat_id int PRIMARY KEY,
+    seat_id serial PRIMARY KEY,
     section smallint NOT NULL,
     seat_row smallint NOT NULL,
     seat_number smallint NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE seats (
 DROP TABLE IF EXISTS events;
 
 CREATE TABLE events (
-    event_id int PRIMARY KEY,
+    event_id serial PRIMARY KEY,
     organizator_id int NOT NULL, --FK to organizators
     administrator_id int NOT NULL, --FK to administrators
     name varchar(128) NOT NULL,
@@ -70,13 +70,13 @@ CREATE TABLE events (
     finish_date TIMESTAMP WITH TIME ZONE NOT NULL,
     place_id int NOT NULL, -- FK to places
     insert_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    update_date TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 DROP TABLE IF EXISTS tickets;
 
 CREATE TABLE tickets (
-    ticket_id int PRIMARY KEY,
+    ticket_id serial PRIMARY KEY,
     event_id int NOT NULL, --FK to events
     user_id int NOT NULL, --FK to users
     seat_id int NOT NULL, -- FK to seats
@@ -99,7 +99,7 @@ ALTER TABLE seats
 
 ALTER TABLE events
     ADD CONSTRAINT fk_event_organizator FOREIGN KEY (organizator_id) REFERENCES organizators(organizator_id),
-    ADD CONSTRAINT fk_event_administrator FOREIGN KEY (administrator_id) REFERENCES organizators(administrator_id),
+    ADD CONSTRAINT fk_event_administrator FOREIGN KEY (administrator_id) REFERENCES users(user_id),
     ADD CONSTRAINT fk_event_place FOREIGN KEY (place_id) REFERENCES places(place_id);
 
 ALTER TABLE tickets
@@ -148,4 +148,4 @@ FOR EACH ROW EXECUTE PROCEDURE insert_update_timestamp_function();
 
 -- INSERT SUPERADMIN
 
-INSERT INTO users (login, name, surname, password, email, role, is_active) VALUES ('admin', 'Administrator', 'Administrator', 'qwerty', 'admin@tickets.com', 1, 1);
+INSERT INTO users (login, name, surname, password, email, role, is_active) VALUES ('admin', 'Administrator', 'Administrator', 'qwerty', 'admin@tickets.com', 1, true);
