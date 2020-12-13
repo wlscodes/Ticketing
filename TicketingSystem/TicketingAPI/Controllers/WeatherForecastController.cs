@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,8 @@ namespace TicketingAPI.Controllers
             _logger = logger;
         }
 
+        [Authorize(Roles = "admin, user")]
+        //[Authorize(Roles = "user")]
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
