@@ -4,9 +4,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TicketingAPI.Resources
+namespace TicketingClient.Models
 {
-    public class RegisterResource : LoginResource, IValidatableObject
+    public class Register : Login
     {
         [Required]
         [RegularExpression(@"^[a-zA-Z0-9_-]{3,32}$")]
@@ -24,18 +24,11 @@ namespace TicketingAPI.Resources
         public string Surname { get; set; }
 
         [Required]
+        [Compare("Password")]
         public string RepeatPassword { get; set; }
 
         [Required]
         [Range(typeof(bool), "true", "true")]
         public bool AcceptRules { get; set; }
-
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            if(!Password.Equals(RepeatPassword))
-            {
-                yield return new ValidationResult("Passwords are different!", new[] { nameof(RepeatPassword) });
-            }
-        }
     }
 }

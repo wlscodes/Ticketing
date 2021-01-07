@@ -10,7 +10,7 @@ namespace TicketingAPI.DatabaseModels
         public Place()
         {
             Events = new HashSet<Event>();
-            Seats = new HashSet<Seat>();
+            Sections = new HashSet<Section>();
         }
 
         public int PlaceId { get; set; }
@@ -22,6 +22,6 @@ namespace TicketingAPI.DatabaseModels
         public virtual User Creator { get; set; }
         public virtual Organizator Organizator { get; set; }
         public virtual ICollection<Event> Events { get; set; }
-        public virtual ICollection<Seat> Seats { get; set; }
+        public virtual ICollection<Section> Sections { get; set; }
     }
 }

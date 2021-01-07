@@ -1,3 +1,28 @@
+ALTER TABLE IF EXISTS administrators 
+    DROP CONSTRAINT IF EXISTS fk_administrator_user
+    DROP CONSTRAINT IF EXISTS fk_administrator_organizator
+
+ALTER TABLE IF EXISTS places 
+    DROP CONSTRAINT IF EXISTS fk_place_organizator
+    DROP CONSTRAINT IF EXISTS fk_place_creator
+
+ALTER TABLE IF EXISTS seats 
+    DROP CONSTRAINT IF EXISTS fk_seat_place
+    DROP CONSTRAINT IF EXISTS fk_seat_section
+
+ALTER TABLE IF EXISTS events 
+    DROP CONSTRAINT IF EXISTS fk_event_organizator
+    DROP CONSTRAINT IF EXISTS fk_event_administrator
+    DROP CONSTRAINT IF EXISTS fk_event_place
+
+ALTER TABLE IF EXISTS tickets 
+    DROP CONSTRAINT IF EXISTS fk_ticket_event
+    DROP CONSTRAINT IF EXISTS fk_ticket_user
+    DROP CONSTRAINT IF EXISTS fk_ticket_seat
+
+ALTER TABLE IF EXISTS sections 
+    DROP CONSTRAINT IF EXISTS fk_section_place
+
 DROP TABLE IF EXISTS users;
 
 /*
@@ -52,11 +77,10 @@ DROP TABLE IF EXISTS seats;
 
 CREATE TABLE seats (
     seat_id serial PRIMARY KEY,
-    section smallint NOT NULL,
+    section_id int NOT NULL, --FK to sections
     seat_row smallint NOT NULL,
     seat_number smallint NOT NULL,
-    place_id int NOT NULL, -- FK to places
-    UNIQUE(section, seat_row, seat_number, place_id)
+    UNIQUE(section_id, seat_row, seat_number)
 );
 
 DROP TABLE IF EXISTS events;
@@ -84,6 +108,15 @@ CREATE TABLE tickets (
     UNIQUE (event_id, seat_id)
 );
 
+DROP TABLE IF EXISTS sections;
+
+CREATE TABLE sections (
+    section_id serial PRIMARY KEY,
+    place_id int NOT NULL, -- FK to organizator
+    name varchar(128) NOT NULL,
+    UNIQUE (place_id, name)
+);
+
 
 -- FOREIGN KEYS
 ALTER TABLE administrators
@@ -95,7 +128,8 @@ ALTER TABLE places
     ADD CONSTRAINT fk_place_creator FOREIGN KEY (creator_id) REFERENCES users(user_id);
 
 ALTER TABLE seats
-    ADD CONSTRAINT fk_seat_place FOREIGN KEY (place_id) REFERENCES places(place_id);
+    ADD CONSTRAINT fk_seat_place FOREIGN KEY (place_id) REFERENCES places(place_id),
+    ADD CONSTRAINT fk_seat_section FOREIGN KEY (section_id) REFERENCES sections(section_id);
 
 ALTER TABLE events
     ADD CONSTRAINT fk_event_organizator FOREIGN KEY (organizator_id) REFERENCES organizators(organizator_id),
@@ -107,6 +141,8 @@ ALTER TABLE tickets
     ADD CONSTRAINT fk_ticket_user FOREIGN KEY (user_id) REFERENCES users(user_id),
     ADD CONSTRAINT fk_ticket_seat FOREIGN KEY (seat_id) REFERENCES seats(seat_id);
 
+ALTER TABLE sections
+    ADD CONSTRAINT fk_section_place FOREIGN KEY (place_id) REFERENCES places(place_id);
 
 -- FUNCTIONS
 CREATE OR REPLACE FUNCTION insert_update_timestamp_function() RETURNS trigger AS $BODY$
@@ -148,4 +184,4 @@ FOR EACH ROW EXECUTE PROCEDURE insert_update_timestamp_function();
 
 -- INSERT SUPERADMIN
 
-INSERT INTO users (login, name, surname, password, email, role, is_active) VALUES ('admin', 'Administrator', 'Administrator', 'qwerty', 'admin@tickets.com', 1, true);
+INSERT INTO users (login, name, surname, password, email, role, is_active) VALUES ('admin', 'Administrator', 'Administrator', '$2a$11$KQSNECjJliC3Y78o3reyI.15s1psYlh4LyyiiK8icfKUULMP9aQ8K', 'admin@tickets.com', 1, true); -- Password: qwerty

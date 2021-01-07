@@ -28,32 +28,33 @@ namespace TicketingAPI.Controllers
         /// Register new user method
         /// </summary>
         /// <param name="resource">Register information</param>
+        [HttpPost]
         public async Task<IActionResult> RegisterUser([FromForm] RegisterResource resource)
         {
-            var login = _userRepository.GetUserByLoginAsync(resource.Login);
+            var login = await _userRepository.GetUserByLoginAsync(resource.Login);
 
-            if (await login != null)
+            if (login != null)
             {
-                return BadRequest();
+                return BadRequest($"Login {resource.Login} already exists");
             }
 
-            var email = _userRepository.GetUserByEmailAsync(resource.Email);
+            var email = await _userRepository.GetUserByEmailAsync(resource.Email);
 
-            if(await email != null)
+            if(email != null)
             {
-                return BadRequest();
+                return BadRequest($"Email {resource.Email} already exists");
             }
 
             var hash = _hashService.HashPassword(resource.Password);
 
-            var register = _registerUserService.RegisterUser(resource, hash);
+            var register = await _registerUserService.RegisterUser(resource, hash);
 
-            if(await register)
+            if(register)
             {
-                return Ok();
+                return Ok("Account has been created");
             }
 
-            return BadRequest();
+            return BadRequest("There was an unexpected error while creating account");
         }
     }
 }

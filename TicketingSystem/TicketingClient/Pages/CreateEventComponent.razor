@@ -1,0 +1,71 @@
+﻿@page "/event/create"
+@using Models
+@inject HttpClient Http
+<h3>Stwórz wydarzenie</h3>
+
+<EditForm Model="_event" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group row">
+        <label for="organizator" class="col-sm-2 col-form-label">Wybierz organizację</label>
+        <div class="col-sm-10">
+            <InputSelect @bind-Value="_event.OrganizatorId" class="form-control" id="organizator">
+                <option value=1>1</option>
+                <option value=2>2</option>
+                <option value=3>3</option>
+                <option value=4>4</option>
+                <option value=5>5</option>
+            </InputSelect>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="place" class="col-sm-2 col-form-label">Wybierz miejsce</label>
+        <div class="col-sm-10">
+            <InputSelect @bind-Value="_event.PlaceId" class="form-control" id="place">
+                <option value=1>1</option>
+                <option value=2>2</option>
+                <option value=3>3</option>
+                <option value=4>4</option>
+                <option value=5>5</option>
+            </InputSelect>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="name" class="col-sm-2 col-form-label">Nazwa</label>
+        <div class="col-sm-10">
+            <InputText id="name" @bind-Value="_event.Name" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="beginDate" class="col-sm-2 col-form-label">Data rozpoczęcia</label>
+        <div class="col-sm-10">
+            <InputDate id="beginDate" @bind-Value="_event.BeginDate" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="finishDate" class="col-sm-2 col-form-label">Data zakończenia</label>
+        <div class="col-sm-10">
+            <InputDate id="finishDate" @bind-Value="_event.FinishDate" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-sm-10">
+            <button type="submit" class="btn btn-primary">Wyślij</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private Event _event = new Event();
+
+    private async Task HandleValidSubmit()
+    {
+
+    }
+}

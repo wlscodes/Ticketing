@@ -6,14 +6,12 @@ using System.Threading.Tasks;
 
 namespace TicketingAPI.Resources
 {
-    public class LoginResource
+    public class OrganizatorResource
     {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        public int CreatorId { get; set; }
 
         [Required]
         [StringLength(128, MinimumLength = 5)]
-        public string Password { get; set; }
+        public string Name { get; set; }
     }
 }

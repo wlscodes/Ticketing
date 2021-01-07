@@ -1,0 +1,37 @@
+﻿@page "/test"
+@inject HttpClient Http
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+@using System.Net.Http
+@using System.Net.Http.Headers
+@using Data
+<h3>TestComponent</h3>
+
+<p>@StringModel</p>
+
+@code {
+
+    private string StringModel { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        Console.WriteLine("Submit");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var request = new HttpRequestMessage()
+        {
+            Method = new HttpMethod("POST"),
+            RequestUri = new Uri(@"http://localhost:5000/test")
+        };
+
+        string token = await SessionStorage.GetItemAsync<string>("token");
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        StringModel = response.StatusCode.ToString();
+        Console.WriteLine("test dziala");
+    }
+}

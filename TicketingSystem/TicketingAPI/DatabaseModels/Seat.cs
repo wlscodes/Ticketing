@@ -13,12 +13,11 @@ namespace TicketingAPI.DatabaseModels
         }
 
         public int SeatId { get; set; }
-        public short Section { get; set; }
+        public int SectionId { get; set; }
         public short SeatRow { get; set; }
         public short SeatNumber { get; set; }
-        public int PlaceId { get; set; }
 
-        public virtual Place Place { get; set; }
+        public virtual Section Section { get; set; }
         public virtual ICollection<Ticket> Tickets { get; set; }
     }
 }

@@ -1,0 +1,84 @@
+﻿@page "/login"
+@using Models
+@using Data
+@inject HttpClient Http
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+
+<h3>Zaloguj się</h3>
+
+@if (!String.IsNullOrEmpty(APIError))
+{
+    <div class="alert alert-danger" role="alert">
+        @APIError
+    </div>
+}
+
+<EditForm Model="_login" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group row">
+        <label for="name" class="col-sm-2 col-form-label">Email</label>
+        <div class="col-sm-10">
+            <InputText id="name" @bind-Value="_login.Email" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label for="password" class="col-sm-2 col-form-label">Hasło</label>
+        <div class="col-sm-10">
+            <InputText type="password" id="password" @bind-Value="_login.Password" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-sm-10">
+            <button type="submit" class="btn btn-primary">Wyślij</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private Login _login = new Login();
+
+    private string APIError { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        using (var form = new MultipartFormDataContent("LoginForm"))
+        {
+            form.Add(new StringContent(_login.Email), "Email");
+            form.Add(new StringContent(_login.Password), "Password");
+
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    var response = await client.PostAsync(@"http://localhost:5000/v1/login", form);
+
+                    var content = await response.Content.ReadAsStringAsync();
+
+                    _login = new Login();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // token
+                        //StorageContent.AddItem("token", content);
+                        //APIError = StorageContent.GetItem("token");
+                        await SessionStorage.SetItemAsync("token", content);
+                        var message = await SessionStorage.GetItemAsync<string>("token");
+                        APIError = message;
+                    }
+                    else
+                    {
+                        APIError = content;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Unexpected error: {e.Message}");
+                }
+            }
+        }
+    }
+}

@@ -29,5 +29,18 @@ namespace TicketingAPI.Repositories
         public Task<User> GetUserByEmailAsync(string email)
             => Context.Users.Where(x => EF.Functions.ILike(email, x.Email)).FirstOrDefaultAsync();
 
+        public async Task<bool> UpdateUserRoleToAdmin(int id)
+        {
+            var user = await GetUserByIdAsync(id);
+
+            if (user is null) return false;
+
+            if(user.Role > 2)
+            {
+                user.Role = 2;
+                SaveAsync();
+            }
+            return true;
+        }
     }
 }

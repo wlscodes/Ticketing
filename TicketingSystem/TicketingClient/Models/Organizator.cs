@@ -4,16 +4,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TicketingAPI.Resources
+namespace TicketingClient.Models
 {
-    public class LoginResource
+    public class Organizator
     {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        //public int CreatorId { get; set; }
 
         [Required]
         [StringLength(128, MinimumLength = 5)]
-        public string Password { get; set; }
+        public string Name { get; set; }
     }
 }

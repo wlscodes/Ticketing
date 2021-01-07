@@ -23,15 +23,17 @@ namespace TicketingAPI.ContextData
         public virtual DbSet<Organizator> Organizators { get; set; }
         public virtual DbSet<Place> Places { get; set; }
         public virtual DbSet<Seat> Seats { get; set; }
+        public virtual DbSet<Section> Sections { get; set; }
         public virtual DbSet<Ticket> Tickets { get; set; }
         public virtual DbSet<User> Users { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            /*if (!optionsBuilder.IsConfigured)
+            if (!optionsBuilder.IsConfigured)
             {
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
                 optionsBuilder.UseNpgsql("Host=localhost;Database=ticketing;Username=Tadmin;Password=qwerty");
-            }*/
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -170,24 +172,45 @@ namespace TicketingAPI.ContextData
             {
                 entity.ToTable("seats");
 
-                entity.HasIndex(e => new { e.Section, e.SeatRow, e.SeatNumber, e.PlaceId }, "seats_section_seat_row_seat_number_place_id_key")
+                entity.HasIndex(e => new { e.SectionId, e.SeatRow, e.SeatNumber }, "seats_section_id_seat_row_seat_number_key")
                     .IsUnique();
 
                 entity.Property(e => e.SeatId).HasColumnName("seat_id");
-
-                entity.Property(e => e.PlaceId).HasColumnName("place_id");
 
                 entity.Property(e => e.SeatNumber).HasColumnName("seat_number");
 
                 entity.Property(e => e.SeatRow).HasColumnName("seat_row");
 
-                entity.Property(e => e.Section).HasColumnName("section");
+                entity.Property(e => e.SectionId).HasColumnName("section_id");
+
+                entity.HasOne(d => d.Section)
+                    .WithMany(p => p.Seats)
+                    .HasForeignKey(d => d.SectionId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_seat_section");
+            });
+
+            modelBuilder.Entity<Section>(entity =>
+            {
+                entity.ToTable("sections");
+
+                entity.HasIndex(e => new { e.PlaceId, e.Name }, "sections_place_id_name_key")
+                    .IsUnique();
+
+                entity.Property(e => e.SectionId).HasColumnName("section_id");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(128)
+                    .HasColumnName("name");
+
+                entity.Property(e => e.PlaceId).HasColumnName("place_id");
 
                 entity.HasOne(d => d.Place)
-                    .WithMany(p => p.Seats)
+                    .WithMany(p => p.Sections)
                     .HasForeignKey(d => d.PlaceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_seat_place");
+                    .HasConstraintName("fk_section_place");
             });
 
             modelBuilder.Entity<Ticket>(entity =>

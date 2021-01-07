@@ -31,7 +31,7 @@ namespace TicketingAPI.Controllers
 
             if(user is null)
             {
-                return NotFound("User doesnt exists");
+                return NotFound("User doesn't exists");
             }
 
             if(_hashService.VerifyPassword(resource.Password, user.Password))
@@ -41,7 +41,7 @@ namespace TicketingAPI.Controllers
                 return Ok(token);
             }
 
-            return NotFound("Wrong Password");
+            return NotFound("Wrong password");
         }
     }
 }

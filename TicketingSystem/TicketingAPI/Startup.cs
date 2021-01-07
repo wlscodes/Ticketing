@@ -26,13 +26,25 @@ namespace TicketingAPI
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            _cors = "ticketing";
         }
 
         public IConfiguration Configuration { get; }
+        private readonly string _cors;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //services.AddCors(options =>
+            //{
+            //    options.AddPolicy(_cors, builder =>
+            //    {
+            //        builder.AllowAnyOrigin()
+            //        .AllowAnyHeader()
+            //        .AllowAnyMethod();
+            //    });
+            //});
+
             services.AddDbContext<ticketingContext>(
                 options => options.UseNpgsql(Configuration.GetConnectionString("ticketingDB"))
             );
@@ -40,11 +52,22 @@ namespace TicketingAPI
             services.AddScoped<IClaimsRepository, ClaimsRepository>();
             services.AddScoped<IOrganizatorRepository, OrganizatorRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IAdministratorRepository, AdministratorRepository>();
+            services.AddScoped<IPlaceRepository, PlaceRepository>();
+            services.AddScoped<IEventRepository, EventRepository>();
+            services.AddScoped<ITicketRepository, TicketRepository>();
+            services.AddScoped<ISeatRepository, SeatRepository>();
 
             services.AddScoped<ITokenGeneratorService, TokenGeneratorService>();
             services.AddScoped<IHashService, HashService>();
             services.AddScoped<IRegisterUserService, RegisterUserService>();
-
+            services.AddScoped<IOrganizatorService, OrganizatorService>();
+            services.AddScoped<IAdministratorService, AdministratorService>();
+            services.AddScoped<IPlaceService, PlaceService>();
+            services.AddScoped<IEventService, EventService>();
+            services.AddScoped<ITicketService, TicketService>();
+            services.AddScoped<IClaimsService, ClaimsService>();
+           
             services.AddControllers();
 
             services.AddAuthentication(options =>
@@ -77,6 +100,16 @@ namespace TicketingAPI
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors(
+                builder =>
+                {
+                    //builder.WithOrigins("http://localhost:56813");
+                    builder.AllowAnyOrigin();
+                    builder.AllowAnyMethod();
+                    builder.AllowAnyHeader();
+                }
+            );
 
             app.UseAuthentication();
 

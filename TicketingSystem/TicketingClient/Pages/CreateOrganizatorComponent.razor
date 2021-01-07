@@ -1,0 +1,80 @@
+﻿@page "/organizator/create"
+@using Models
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+
+
+<h3>Dodaj nową organizację</h3>
+
+@if (!String.IsNullOrEmpty(APIError))
+{
+    <div class="alert alert-danger" role="alert">
+        @APIError
+    </div>
+}
+
+<EditForm Model="_organizator" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group row">
+        <label for="name" class="col-sm-2 col-form-label">Nazwa</label>
+        <div class="col-sm-10">
+            <InputText id="name" @bind-Value="_organizator.Name" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-sm-10">
+            <button type="submit" class="btn btn-primary">Wyślij</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private Organizator _organizator = new Organizator();
+
+    private string APIError { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        APIError = String.Empty;
+
+        using (var form = new MultipartFormDataContent("CreateOrganizatorForm"))
+        {
+            form.Add(new StringContent(_organizator.Name), "Name");
+
+            using (var request = new HttpRequestMessage())
+            {
+                try
+                {
+                    string token = await SessionStorage.GetItemAsync<string>("token");
+
+                    request.Method = new HttpMethod("POST");
+                    request.RequestUri = new Uri(@"http://localhost:5000/v1/organizator");
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    request.Content = form;
+
+                    var response = await Http.SendAsync(request);
+
+                    var content = await response.Content.ReadAsStringAsync();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        APIError = content;
+                        //redirect to organizator page
+                    }
+                    else
+                    {
+                        APIError = content;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Unexpected error: {e.Message}");
+                }
+            }
+        }
+    }
+}

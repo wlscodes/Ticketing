@@ -16,5 +16,7 @@ namespace TicketingAPI.Repositories.Interfaces
 
         public Task AddUser(User user);
 
+        public Task<bool> UpdateUserRoleToAdmin(int id);
+
     }
 }

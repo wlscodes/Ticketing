@@ -22,7 +22,8 @@ namespace TicketingAPI.Repositories
 
             return new List<Claim>()
             {
-                new Claim(ClaimTypes.Role, ReadClaim(user.Role))
+                new Claim(ClaimTypes.Role, ReadClaim(user.Role)),
+                new Claim(ClaimTypes.SerialNumber, user.UserId.ToString())
             };
         }
 
