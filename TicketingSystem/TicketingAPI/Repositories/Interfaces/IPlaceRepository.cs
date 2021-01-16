@@ -13,5 +13,7 @@ namespace TicketingAPI.Repositories.Interfaces
         public Task<bool> IsPlaceExistsInOrganizator(int organizatorId, int placeId);
 
         public Task AddPlace(Place place);
+
+        public Task<List<Place>> GetPlacesByOrganizatorId(int organizatorId);
     }
 }

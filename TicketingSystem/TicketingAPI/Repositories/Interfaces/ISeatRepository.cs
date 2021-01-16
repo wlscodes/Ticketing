@@ -11,5 +11,7 @@ namespace TicketingAPI.Repositories.Interfaces
         public Task<bool> IsSeatInEventPlace(int seatId, int eventId);
 
         public Task<Seat> GetSeatById(int seatId);
+
+        public Task<bool> AreAllSeatsInEventPlace(List<int> seatsId, int eventId);
     }
 }

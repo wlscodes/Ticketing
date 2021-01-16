@@ -29,5 +29,10 @@ namespace TicketingAPI.Repositories
         {
             return await Task.Run(() => Context.Places.Where(x => x.OrganizatorId == organizatorId && x.PlaceId == placeId).Any());
         }
+
+        public async Task<List<Place>> GetPlacesByOrganizatorId(int organizatorId)
+        {
+            return await Context.Places.Where(x => x.OrganizatorId == organizatorId).ToListAsync();
+        }
     }
 }

@@ -11,10 +11,9 @@ namespace TicketingAPI.Resources
         [Range(1, Int32.MaxValue)]
         public int EventId { get; set; }
 
-        [Range(1, Int32.MaxValue)]
         public int UserId { get; set; }
 
-        [Range(1, Int32.MaxValue)]
-        public int SeatId { get; set; }
+        [Required]
+        public List<int> SeatId { get; set; }
     }
 }

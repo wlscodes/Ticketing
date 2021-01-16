@@ -1,0 +1,128 @@
+﻿@page "/user"
+@using Models
+@using System.Net.Http.Headers
+@using Newtonsoft.Json;
+@inject HttpClient Http
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+<h3>Panel użytkownika</h3>
+
+<h2>Aktualne bilety</h2>
+
+@if (!String.IsNullOrEmpty(APIError))
+{
+    <div class="alert alert-danger" role="alert">
+        @APIError
+    </div>
+}
+
+@if (!String.IsNullOrEmpty(APISuccess))
+{
+    <div class="alert alert-success" role="alert">
+        @APISuccess
+    </div>
+}
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th scope="col">Wydarzenie</th>
+            <th scope="col">Data rozpoczęcia</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var ticket in _tickets)
+        {
+            <tr>
+                <td>@ticket.EventName</td>
+                <td>@ticket.BeginDate.ToLocalTime()</td>
+                <td><a href="/ticket/@ticket.TicketId" class="btn btn-primary active" aria-pressed="true">Szczegóły</a></td>
+                <td><button class="btn btn-warning active" @onclick="() => CancelTicket(ticket.TicketId)">Anuluj bilet</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+<p><a href="/user/archive">Archiwum</a></p>
+@code {
+    private List<TicketList> _tickets { get; set; } = new List<TicketList>();
+
+    private string APIError { get; set; }
+    private string APISuccess { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetTickets();
+    }
+
+    private async Task GetTickets()
+    {
+        using (var request = new HttpRequestMessage())
+        {
+            try
+            {
+                string token = await SessionStorage.GetItemAsync<string>("token");
+
+                request.Method = new HttpMethod("GET");
+                request.RequestUri = new Uri(@"http://localhost:5000/v1/ticket?archieve=false");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+
+
+                var response = await Http.SendAsync(request);
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _tickets = JsonConvert.DeserializeObject<List<TicketList>>(content);
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unexpected error: {e.Message}");
+            }
+        }
+    }
+
+    private async Task CancelTicket(int ticketId)
+    {
+        APIError = String.Empty;
+        APISuccess = String.Empty;
+        using (var request = new HttpRequestMessage())
+        {
+            try
+            {
+                string token = await SessionStorage.GetItemAsync<string>("token");
+
+                request.Method = new HttpMethod("DELETE");
+
+                string url = String.Format("{0}{1}", @"http://localhost:5000/v1/ticket?ticketId=", ticketId);
+                request.RequestUri = new Uri(url);
+
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await Http.SendAsync(request);
+
+                string content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    APISuccess = content;
+                    await GetTickets();
+                }
+                else
+                {
+                    APIError = content;
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unexpected error: {e.Message}");
+            }
+        }
+
+    }
+}

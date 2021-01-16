@@ -88,7 +88,7 @@ namespace TicketingAPI.Controllers
                 return BadRequest("There was an unexpected error while creating an organization");
             }
 
-            return Ok(result.OrganizatorId);
+            return Ok("New organizator has been created");
             
         }
     }

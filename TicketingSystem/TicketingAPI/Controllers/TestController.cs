@@ -21,27 +21,31 @@ namespace TicketingAPI.Controllers
         //private readonly IOrganizatorRepository _organizatorRepository;
         //private readonly IPlaceRepository _placeRepository;
         private readonly IClaimsService _claimsService;
+        private readonly IEventService _eventService;
+        private readonly IEventRepository _eventRepository;
 
         public TestController(
             //IHashService hash, 
             //IUserRepository userRepository, 
             //IOrganizatorRepository organizatorRepository
-            IClaimsService claimsService
+            IClaimsService claimsService,
+            IEventService eventService,
+            IEventRepository eventRepository
             )
         {
             //_hash = hash;
             //_userRepository = userRepository;
             //_organizatorRepository = organizatorRepository;
             _claimsService = claimsService;
+            _eventService = eventService;
+            _eventRepository = eventRepository;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index([FromQuery] int id)
         {
-            //return _hash.HashPassword(pass);
-            //return _hash.VerifyPassword("Qwerty", "$2a$11$AZwYTefeVqTac6ox25Exu.JnNpQsHLp3JjINAs590AieGIjg56xkS").ToString();
 
-            return Ok();
+            return Ok(await _eventService.GetEventData(id));
         }
 
         [Authorize]

@@ -14,6 +14,13 @@
     </div>
 }
 
+@if (!String.IsNullOrEmpty(APISuccess))
+{
+    <div class="alert alert-success" role="alert">
+        @APISuccess
+    </div>
+}
+
 <EditForm Model="_organizator" OnValidSubmit="@HandleValidSubmit">
     <DataAnnotationsValidator />
     <ValidationSummary />
@@ -36,6 +43,7 @@
     private Organizator _organizator = new Organizator();
 
     private string APIError { get; set; }
+    private string APISuccess { get; set; }
 
     private async Task HandleValidSubmit()
     {
@@ -62,8 +70,8 @@
 
                     if (response.IsSuccessStatusCode)
                     {
-                        APIError = content;
-                        //redirect to organizator page
+                        await RegenerateToken();
+                        APISuccess = content;
                     }
                     else
                     {
@@ -74,6 +82,35 @@
                 {
                     Console.WriteLine($"Unexpected error: {e.Message}");
                 }
+            }
+        }
+    }
+
+    private async Task RegenerateToken()
+    {
+        using (var request = new HttpRequestMessage())
+        {
+            try
+            {
+                string token = await SessionStorage.GetItemAsync<string>("token");
+
+                request.Method = new HttpMethod("GET");
+                request.RequestUri = new Uri(@"http://localhost:5000/v1/token");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await Http.SendAsync(request);
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await SessionStorage.SetItemAsync("token", content);
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unexpected error: {e.Message}");
             }
         }
     }

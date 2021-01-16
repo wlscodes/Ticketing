@@ -8,8 +8,7 @@ namespace TicketingAPI.Resources
 {
     public class SectionResource
     {
-        [Required]
-        [StringLength(128, MinimumLength = 1)]
+        [RegularExpression(@"^[a-zA-Z0-9]{2,128}$")]
         public string SectionName { get; set; }
 
         [Required]

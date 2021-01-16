@@ -1,15 +1,45 @@
 ﻿@inherits LayoutComponentBase
-
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+@inject NavigationManager NavManager
 <div class="sidebar">
     <NavMenu />
 </div>
 
 <div class="main">
-    <div class="top-row px-4">
-        <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
+    <div class="top-row px-1">
+        @if (IsLoged)
+        {
+            <i class="bi bi-person"></i>
+            <a href="/user" class="ml-md-auto">Moje konto</a>
+            <button type="button" class="btn btn-secondary" @onclick="Logout">Wyloguj</button>
+        }
+        else
+        {
+            <i class="bi bi-person-plus"></i>
+            <a href="/login" class="ml-md-auto">Zaloguj się</a>
+            <a href="/register" class="ml-md-auto">Zarejestruj się</a>
+        }
     </div>
 
     <div class="content px-4">
         @Body
     </div>
 </div>
+
+@code{
+    public bool IsLoged { get; set; } = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        base.OnParametersSet();
+        string token = await SessionStorage.GetItemAsync<string>("token");
+
+        IsLoged = !String.IsNullOrEmpty(token);
+    }
+
+    private async Task Logout()
+    {
+        await SessionStorage.RemoveItemAsync("token");
+        NavManager.NavigateTo("/", true);
+    }
+}

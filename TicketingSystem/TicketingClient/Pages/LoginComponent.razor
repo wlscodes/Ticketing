@@ -3,6 +3,7 @@
 @using Data
 @inject HttpClient Http
 @inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+@inject NavigationManager NavigationManager
 
 <h3>Zaloguj się</h3>
 
@@ -62,12 +63,8 @@
 
                     if (response.IsSuccessStatusCode)
                     {
-                        // token
-                        //StorageContent.AddItem("token", content);
-                        //APIError = StorageContent.GetItem("token");
                         await SessionStorage.SetItemAsync("token", content);
-                        var message = await SessionStorage.GetItemAsync<string>("token");
-                        APIError = message;
+                        NavigationManager.NavigateTo("/", true);
                     }
                     else
                     {

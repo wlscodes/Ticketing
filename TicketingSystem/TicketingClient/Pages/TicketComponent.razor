@@ -1,0 +1,63 @@
+﻿@page "/ticket/{Id}"
+@using Models
+@using Newtonsoft.Json;
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+<h2>Bilet</h2>
+
+@if (_ticketDetails is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <h3><a href="/event/@_ticketDetails.EventId">@_ticketDetails.EventName</a></h3>
+    <p>Data: @_ticketDetails.BeginDate.ToUniversalTime() - @_ticketDetails.FinishDate.ToUniversalTime()</p>
+    <p>Organizator: @_ticketDetails.OrganizatorName</p>
+    <p>Miejsce: @_ticketDetails.PlaceName</p>
+    <p>Sekcja: @_ticketDetails.SectionName</p>
+    <p>Rząd [@_ticketDetails.SeatRow] Miejsce [@_ticketDetails.SeatNumber]</p>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private TicketDetails _ticketDetails { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetLastEvents();
+    }
+
+    private async Task GetLastEvents()
+    {
+        using (var request = new HttpRequestMessage())
+        {
+            try
+            {
+                string token = await SessionStorage.GetItemAsync<string>("token");
+
+                request.Method = new HttpMethod("GET");
+                string url = String.Format("{0}{1}", @"http://localhost:5000/v1/ticket/details?ticketId=", Id);
+                request.RequestUri = new Uri(url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await Http.SendAsync(request);
+
+                var content = await response.Content.ReadAsStringAsync();
+
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _ticketDetails = JsonConvert.DeserializeObject<TicketDetails>(content);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unexpected error: {e.Message}");
+            }
+        }
+    }
+}

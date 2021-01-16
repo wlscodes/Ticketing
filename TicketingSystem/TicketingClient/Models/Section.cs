@@ -8,16 +8,15 @@ namespace TicketingClient.Models
 {
     public class Section
     {
-        [Required]
-        [StringLength(128, MinimumLength = 1)]
+        [RegularExpression(@"^[a-zA-Z0-9]{2,128}$")]
         public string SectionName { get; set; }
 
         [Required]
-        [Range(1, 256)]
+        [Range(1, 255)]
         public int RowsNumber { get; set; }
 
         [Required]
-        [Range(1, 256)]
+        [Range(1, 255)]
         public int SeatsInRow { get; set; }
     }
 }

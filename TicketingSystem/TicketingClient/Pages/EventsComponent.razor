@@ -1,0 +1,63 @@
+﻿@page "/events"
+@using Models
+@using Newtonsoft.Json;
+@inject HttpClient Http
+
+<h2>Dostępne wydarzenia</h2>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th scope="col">Wydarzenie</th>
+            <th scope="col">Miejsce</th>
+            <th scope="col">Data rozpoczęcia</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var eve in _events)
+        {
+        <tr>
+            <td>@eve.EventName</td>
+            <td>@eve.OrganizatorName</td>
+            <td>@eve.EventBeginDate.ToUniversalTime()</td>
+            <td><a href="/event/@eve.EventId" class="btn btn-primary active" aria-pressed="true">Wyświetl</a></td>
+        </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<EventInfo> _events { get; set; } = new List<EventInfo>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetEvents();
+    }
+
+    private async Task GetEvents()
+    {
+        using (var request = new HttpRequestMessage())
+        {
+            try
+            {
+                request.Method = new HttpMethod("GET");
+                request.RequestUri = new Uri(@"http://localhost:5000/v1/event/list");
+
+                var response = await Http.SendAsync(request);
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _events = JsonConvert.DeserializeObject<List<EventInfo>>(content);
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unexpected error: {e.Message}");
+            }
+        }
+    }
+}

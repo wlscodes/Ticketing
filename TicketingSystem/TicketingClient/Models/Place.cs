@@ -9,10 +9,8 @@ namespace TicketingClient.Models
     public class Place
     {
         [Required]
-        public int UserId { get; set; }
-
-        [Required]
         //[Range(1, Int32.MaxValue)]
+        [RegularExpression(@"^[0-9]{1,10}$")]
         public string OrganizatorId { get; set; }
 
         [Required]
@@ -20,7 +18,6 @@ namespace TicketingClient.Models
         public string PlaceName { get; set; }
 
         [Required]
-        //TODO: Check if there are unique sections names
         public List<Section> Sections { get; set; }
     }
 }

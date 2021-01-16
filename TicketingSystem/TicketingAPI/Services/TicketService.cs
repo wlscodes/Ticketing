@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using TicketingAPI.DatabaseModels;
 using TicketingAPI.Repositories.Interfaces;
 using TicketingAPI.Resources;
+using TicketingAPI.ResponseModels;
 using TicketingAPI.Services.Interfaces;
 
 namespace TicketingAPI.Services
@@ -20,16 +21,33 @@ namespace TicketingAPI.Services
 
         public async Task<bool> CreateTicket(ReserveTicketResource resource)
         {
-            Ticket ticket = new Ticket
-            {
-                EventId = resource.EventId,
-                SeatId = resource.SeatId,
-                UserId = resource.UserId
-            };
+            List<Ticket> list = new List<Ticket>();
 
-            await _ticketRepository.AddTicketAsync(ticket);
+            foreach(var seat in resource.SeatId)
+            {
+                list.Add(new Ticket()
+                {
+                    EventId = resource.EventId,
+                    SeatId = seat,
+                    UserId =resource.UserId
+                });
+            }
+
+            await _ticketRepository.AddTicketAsync(list);
 
             return true;
+        }
+
+        public async Task<List<TicketList>> GetUserTickets(bool getArchieve, int userId)
+        {
+            if (getArchieve)
+            {
+                return await _ticketRepository.GetTicketsByUserID(userId);
+            }
+            else
+            {
+                return await _ticketRepository.GetActiveTicketsByUserID(userId);
+            }
         }
     }
 }

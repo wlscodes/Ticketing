@@ -1,4 +1,6 @@
-﻿<div class="top-row pl-4 navbar navbar-dark">
+﻿@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+
+<div class="top-row pl-4 navbar navbar-dark">
     <a class="navbar-brand" href="">TicketingClient</a>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
@@ -9,19 +11,32 @@
     <ul class="nav flex-column">
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
+                <i class="bi bi-house-door"></i> Strona Główna
             </NavLink>
         </li>
         <li class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="oi oi-plus" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="/events">
+                <i class="bi bi-list"></i> Lista wydarzeń
             </NavLink>
         </li>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-            </NavLink>
-        </li>
+        @if (IsLoged)
+        {
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="/organizator/create">
+                    <i class="bi bi-diagram-3"></i> Stwórz organizację
+                </NavLink>
+            </li>
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="/place/create">
+                    <i class="bi bi-grid-3x2-gap"></i> Stwórz salę
+                </NavLink>
+            </li>
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="/event/create">
+                    <i class="bi bi-megaphone"></i> Stwórz wydarzenie
+                </NavLink>
+            </li>
+        }
     </ul>
 </div>
 
@@ -29,6 +44,16 @@
     private bool collapseNavMenu = true;
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    public bool IsLoged { get; set; } = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        base.OnParametersSet();
+        string token = await SessionStorage.GetItemAsync<string>("token");
+
+        IsLoged = !String.IsNullOrEmpty(token);
+    }
 
     private void ToggleNavMenu()
     {

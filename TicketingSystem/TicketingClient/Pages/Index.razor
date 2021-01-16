@@ -1,7 +1,60 @@
 ﻿@page "/"
+@using Models
+@using Newtonsoft.Json;
+@inject HttpClient Http
 
-<h1>Hello, world!</h1>
+<h1>System rezerwacji biletów</h1>
 
-Welcome to your new app.
+<h3>Najbliższe wydarzenia: </h3>
+<div class="form-group row">
+    @foreach (var eve in _events)
+    {
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@eve.EventName</h5>
+                    <p class="card-text">Data rozpoczęcia: @eve.EventBeginDate.ToUniversalTime()</p>
+                    <a href="/event/@eve.EventId" class="btn btn-primary">Sprawdź</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@code{
+    private List<EventInfo> _events = new List<EventInfo>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetLastEvents();
+    }
+
+    private async Task GetLastEvents()
+    {
+        _events.Clear();
+
+        using (var request = new HttpRequestMessage())
+        {
+            try
+            {
+                request.Method = new HttpMethod("GET");
+                string url = @"http://localhost:5000/v1/event/last";
+                request.RequestUri = new Uri(url);
+
+                var response = await Http.SendAsync(request);
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    _events = JsonConvert.DeserializeObject<List<EventInfo>>(content);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unexpected error: {e.Message}");
+            }
+        }
+    }
+}

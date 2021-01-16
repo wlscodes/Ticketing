@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using TicketingAPI.DatabaseModels;
 using TicketingAPI.Repositories.Interfaces;
 using TicketingAPI.Resources;
+using TicketingAPI.ResponseModels;
 using TicketingAPI.Services.Interfaces;
 
 namespace TicketingAPI.Services
@@ -54,6 +55,16 @@ namespace TicketingAPI.Services
             {
                 for (short j = 1; j <= numberOfSeats; j++)
                     yield return new Seat { SeatRow = i, SeatNumber = j };
+            }
+        }
+
+        public async IAsyncEnumerable<PlaceSelect> GetPlacesByOrganizatorId(int organizatorId)
+        {
+            var places = await _placeRepository.GetPlacesByOrganizatorId(organizatorId);
+
+            foreach(var p in places)
+            {
+                yield return new PlaceSelect() { Id = p.PlaceId, Name = p.Name };
             }
         }
     }

@@ -1,0 +1,193 @@
+﻿@page "/event/{Id}"
+@using Models
+@using System.Net.Http.Headers
+@using Newtonsoft.Json;
+@inject HttpClient Http
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
+<h3>Wydarzenie</h3>
+
+@if (!String.IsNullOrEmpty(APIError))
+{
+    <div class="alert alert-danger" role="alert">
+        @APIError
+    </div>
+}
+@if (!String.IsNullOrEmpty(APISuccess))
+{
+    <div class="alert alert-success" role="alert">
+        @APISuccess
+    </div>
+}
+
+@if (_eventInfo is null)
+{
+    <h2>Loading...</h2>
+}
+else
+{
+
+    <h2>@_eventInfo.EventName</h2>
+    <p>Data wydarzenia: @_eventInfo.EventBeginDate.ToUniversalTime() - @_eventInfo.EventFinishDate.ToUniversalTime()</p>
+    <p>Organizator: @_eventInfo.OrganizatorName</p>
+    <p>Miejsce: </p>
+
+    <p>Wybrane miejsca: @_selectedSeats.Count</p>
+    <button class="btn btn-primary" @onclick="ReserveSeats">Zarezerwuj miejsca</button>
+
+    @foreach (var section in _eventInfo.Sections.GroupBy(x => x.SectionId))
+    {
+        <hr />
+        <p>Sekcja: @section.FirstOrDefault().SectionName</p>
+        @foreach (var row in section.OrderBy(x => x.SeatRow).Select(x => x.SeatRow).Distinct())
+        {
+            @foreach (var seat in section.Where(x => x.SeatRow == row).OrderBy(x => x.SeatNumber).ToList())
+            {
+                @if (seat.IsSeatFree)
+                {
+                    <button type="button" class="@(_selectedSeats.Contains(seat.SeatId) ? "btn btn-info" : "btn btn-light")" @onclick="() => SelectPlace(seat.SeatId)"><i class="bi bi-square" /></button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-dark" id="@seat.SeatId" disabled>
+                        <i class="bi bi-square" />
+                    </button>
+                }
+            }
+            <br />
+        }
+
+    }
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private EventInfo _eventInfo { get; set; }
+
+    private List<int> _selectedSeats { get; set; } = new List<int>();
+
+    private string APIError { get; set; }
+
+    private string APISuccess { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetEventInfo();
+    }
+
+    private async Task SelectPlace(int number)
+    {
+        if (_selectedSeats.Contains(number))
+        {
+            await RemoveFromSeatsList(number);
+        }
+        else
+        {
+            await AddToSeatsList(number);
+        }
+    }
+
+    private async Task AddToSeatsList(int number)
+    {
+        _selectedSeats.Add(number);
+    }
+
+    private async Task RemoveFromSeatsList(int number)
+    {
+        _selectedSeats.Remove(number);
+    }
+
+    private async Task GetEventInfo()
+    {
+        using (var request = new HttpRequestMessage())
+        {
+            try
+            {
+                request.Method = new HttpMethod("GET");
+                string url = String.Format("{0}{1}", @"http://localhost:5000/v1/event?eventId=", Id);
+                request.RequestUri = new Uri(url);
+
+                var response = await Http.SendAsync(request);
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _eventInfo = JsonConvert.DeserializeObject<EventInfo>(content);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unexpected error: {e.Message}");
+            }
+        }
+    }
+
+    private async Task ReserveSeats()
+    {
+        APIError = String.Empty;
+        APISuccess = String.Empty;
+
+        if (_selectedSeats.Count == 0)
+        {
+            APIError = "You must choose at least one seat";
+            return;
+        }
+
+        string token = await SessionStorage.GetItemAsync<string>("token");
+
+        if (String.IsNullOrEmpty(token))
+        {
+            APIError = "You must login to reserve a seat";
+            return;
+        }
+
+        if(_eventInfo.EventBeginDate < DateTime.UtcNow)
+        {
+            APIError = "Cannot reserve tickets -event is from past";
+        }
+
+        using (var form = new MultipartFormDataContent("ReserveSeatForm"))
+        {
+            form.Add(new StringContent(Id), "EventId");
+
+            int i = 0;
+            foreach (var seat in _selectedSeats)
+            {
+                form.Add(new StringContent(seat.ToString()), $"SeatId[{i++}]");
+            }
+
+            using (var request = new HttpRequestMessage())
+            {
+                try
+                {
+                    request.Method = new HttpMethod("POST");
+                    request.RequestUri = new Uri(@"http://localhost:5000/v1/ticket");
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    request.Content = form;
+
+                    var response = await Http.SendAsync(request);
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (response.IsSuccessStatusCode)
+                    {
+                        APISuccess = content;
+                        _selectedSeats.Clear();
+                        await GetEventInfo();
+                    }
+                    else
+                    {
+                        APIError = content;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Unexpected error: {e.Message}");
+                }
+            }
+        }
+    }
+}
+
+

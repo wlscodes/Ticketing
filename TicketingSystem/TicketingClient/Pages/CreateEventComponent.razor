@@ -1,7 +1,24 @@
 ﻿@page "/event/create"
 @using Models
+@using System.Net.Http.Headers
+@using Newtonsoft.Json;
 @inject HttpClient Http
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorage
 <h3>Stwórz wydarzenie</h3>
+
+@if (!String.IsNullOrEmpty(APIError))
+{
+    <div class="alert alert-danger" role="alert">
+        @APIError
+    </div>
+}
+
+@if (!String.IsNullOrEmpty(APISuccess))
+{
+    <div class="alert alert-success" role="alert">
+        @APISuccess
+    </div>
+}
 
 <EditForm Model="_event" OnValidSubmit="@HandleValidSubmit">
     <DataAnnotationsValidator />
@@ -10,25 +27,23 @@
     <div class="form-group row">
         <label for="organizator" class="col-sm-2 col-form-label">Wybierz organizację</label>
         <div class="col-sm-10">
-            <InputSelect @bind-Value="_event.OrganizatorId" class="form-control" id="organizator">
-                <option value=1>1</option>
-                <option value=2>2</option>
-                <option value=3>3</option>
-                <option value=4>4</option>
-                <option value=5>5</option>
-            </InputSelect>
+            <select @onchange="@GetOrganizatorPlaces" class="form-control" id="organizator">
+                @foreach (var o in _adminOrganizators)
+                {
+                    <option value="@o.Id">@o.Name</option>
+                }
+            </select>
         </div>
     </div>
 
     <div class="form-group row">
-        <label for="place" class="col-sm-2 col-form-label">Wybierz miejsce</label>
+        <label for="place" class="col-sm-2 col-form-label">Wybierz salę</label>
         <div class="col-sm-10">
             <InputSelect @bind-Value="_event.PlaceId" class="form-control" id="place">
-                <option value=1>1</option>
-                <option value=2>2</option>
-                <option value=3>3</option>
-                <option value=4>4</option>
-                <option value=5>5</option>
+                @foreach (var p in _organizatorPlaces)
+                {
+                    <option value="@p.Id">@p.Name</option>
+                }
             </InputSelect>
         </div>
     </div>
@@ -43,14 +58,16 @@
     <div class="form-group row">
         <label for="beginDate" class="col-sm-2 col-form-label">Data rozpoczęcia</label>
         <div class="col-sm-10">
-            <InputDate id="beginDate" @bind-Value="_event.BeginDate" class="form-control" />
+            <input type="datetime-local" @bind-value="_event.BeginDate" @bind-value:format="yyyy-MM-ddTHH:mm" class="form-control"/>
+            @*<InputDate id="beginDate" @bind-Value="_event.BeginDate" @bind:format="yyyy-MM-ddTHH:mm" class="form-control" />*@
         </div>
     </div>
 
     <div class="form-group row">
         <label for="finishDate" class="col-sm-2 col-form-label">Data zakończenia</label>
         <div class="col-sm-10">
-            <InputDate id="finishDate" @bind-Value="_event.FinishDate" class="form-control" />
+            <input type="datetime-local" @bind-value="_event.FinishDate" @bind-value:format="yyyy-MM-ddTHH:mm" class="form-control" />
+            @*<InputDate id="finishDate" @bind-Value="_event.FinishDate" class="form-control" />*@
         </div>
     </div>
 
@@ -62,10 +79,137 @@
 </EditForm>
 
 @code {
-    private Event _event = new Event();
+    private Event _event = new Event() { BeginDate = DateTime.Now, FinishDate = DateTime.Now };
+
+    private List<AdminOrganizators> _adminOrganizators = new List<AdminOrganizators>() { new AdminOrganizators() { Id = 0, Name = "-- Select an orgaznizator --" } };
+    private List<OrganizatorPlace> _organizatorPlaces;
+
+    private string APIError { get; set; }
+
+    private string APISuccess { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ClearOganizatorPlaces();
+        await GetAdminOrganizations();
+    }
 
     private async Task HandleValidSubmit()
     {
+        APIError = String.Empty;
+        APISuccess = String.Empty;
 
+        Console.WriteLine("Begin: "+ _event.BeginDate.ToString("yyyy-MM-ddTHH:mm"));
+        Console.WriteLine("Finish: "+ _event.FinishDate.ToString("yyyy-MM-ddTHH:mm"));
+
+        using (var form = new MultipartFormDataContent("CreateEventForm"))
+        {
+            form.Add(new StringContent(_event.Name), "Name");
+            form.Add(new StringContent(_event.OrganizatorId), "OrganizatorId");
+            form.Add(new StringContent(_event.PlaceId), "PlaceId");
+            form.Add(new StringContent(_event.BeginDate.ToString("yyyy-MM-ddTHH:mm")), "BeginDate");
+            form.Add(new StringContent(_event.FinishDate.ToString("yyyy-MM-ddTHH:mm")), "FinishDate");
+
+            using (var request = new HttpRequestMessage())
+            {
+                try
+                {
+                    string token = await SessionStorage.GetItemAsync<string>("token");
+
+                    request.Method = new HttpMethod("POST");
+                    request.RequestUri = new Uri(@"http://localhost:5000/v1/event");
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    request.Content = form;
+
+                    var response = await Http.SendAsync(request);
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine(content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        APISuccess = content;
+                        _event = new Event() { BeginDate = DateTime.Now, FinishDate = DateTime.Now }; ;
+                    }
+                    else
+                    {
+                        APIError = content;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Unexpected error: {e.Message}");
+                }
+            }
+        }
     }
+
+    private async Task ClearOganizatorPlaces()
+    {
+        _organizatorPlaces = new List<OrganizatorPlace>() { new OrganizatorPlace() { Id = 0, Name = "-- Select place --" } };
+    }
+
+    private async Task GetOrganizatorPlaces(ChangeEventArgs e)
+    {
+        _event.OrganizatorId = e.Value.ToString();
+
+        await ClearOganizatorPlaces();
+
+        using (var request = new HttpRequestMessage())
+        {
+            try
+            {
+
+                request.Method = new HttpMethod("GET");
+
+                string url = String.Format("{0}{1}", @"http://localhost:5000/v1/place?organizatorId=", _event.OrganizatorId);
+                request.RequestUri = new Uri(url);
+
+                var response = await Http.SendAsync(request);
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonConvert.DeserializeObject<List<OrganizatorPlace>>(content);
+                    _organizatorPlaces.AddRange(result);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task GetAdminOrganizations()
+    {
+        using (var request = new HttpRequestMessage())
+        {
+            try
+            {
+                string token = await SessionStorage.GetItemAsync<string>("token");
+
+                request.Method = new HttpMethod("GET");
+                request.RequestUri = new Uri(@"http://localhost:5000/v1/administrator");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await Http.SendAsync(request);
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonConvert.DeserializeObject<List<AdminOrganizators>>(content);
+                    _adminOrganizators.AddRange(result);
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unexpected error: {e.Message}");
+            }
+        }
+    }
+
 }

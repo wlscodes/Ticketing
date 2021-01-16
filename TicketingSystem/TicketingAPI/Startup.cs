@@ -57,6 +57,7 @@ namespace TicketingAPI
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<ITicketRepository, TicketRepository>();
             services.AddScoped<ISeatRepository, SeatRepository>();
+            services.AddScoped<IEventSeatRepository, EventSeatRepository>();
 
             services.AddScoped<ITokenGeneratorService, TokenGeneratorService>();
             services.AddScoped<IHashService, HashService>();

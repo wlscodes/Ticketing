@@ -27,13 +27,15 @@ namespace TicketingAPI.ContextData
         public virtual DbSet<Ticket> Tickets { get; set; }
         public virtual DbSet<User> Users { get; set; }
 
+        public virtual DbSet<EventSeats> EventSeats { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
-            {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseNpgsql("Host=localhost;Database=ticketing;Username=Tadmin;Password=qwerty");
-            }
+//            if (!optionsBuilder.IsConfigured)
+//            {
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+//                optionsBuilder.UseNpgsql("Host=localhost;Database=ticketing;Username=Tadmin;Password=qwerty");
+//            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -297,6 +299,33 @@ namespace TicketingAPI.ContextData
                     .IsRequired()
                     .HasMaxLength(32)
                     .HasColumnName("surname");
+            });
+
+            modelBuilder.Entity<EventSeats>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("EventSeats");
+
+                entity.Property(e => e.EventId)
+                    .HasColumnName("event_id");
+
+                entity.Property(e => e.SectionId)
+                    .HasColumnName("section_id");
+
+                entity.Property(e => e.SectionName)
+                    .HasColumnName("section_name");
+
+                entity.Property(e => e.SeatId)
+                    .HasColumnName("seat_id");
+
+                entity.Property(e => e.SeatRow)
+                    .HasColumnName("seat_row");
+
+                entity.Property(e => e.SeatNumber)
+                    .HasColumnName("seat_number");
+
+                entity.Property(e => e.IsSeatFree)
+                    .HasColumnName("is_seat_free");
             });
 
             OnModelCreatingPartial(modelBuilder);

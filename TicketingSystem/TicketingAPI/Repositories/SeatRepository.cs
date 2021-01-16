@@ -28,5 +28,16 @@ namespace TicketingAPI.Repositories
 
             return seat.Count() == 1;
         }
+
+        public async Task<bool> AreAllSeatsInEventPlace(List<int> seatsId, int eventId)
+        {
+            var seats = await (from e in Context.Events
+                        join sc in Context.Sections on e.PlaceId equals sc.PlaceId
+                        join se in Context.Seats on sc.SectionId equals se.SectionId
+                        where e.EventId == eventId
+                        select se.SeatId).ToListAsync();
+
+            return seats.Intersect(seatsId).Count() == seatsId.Count();
+        }
     }
 }

@@ -8,8 +8,6 @@ namespace TicketingClient.Models
 {
     public class Organizator
     {
-        //public int CreatorId { get; set; }
-
         [Required]
         [StringLength(128, MinimumLength = 5)]
         public string Name { get; set; }
